@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>里民承印 · 工單系統</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+
+:root{
+  --ink:#1a1a1a;
+  --gray:#555;
+  --pale:#f5f4f0;
+  --border:#bbb;
+  --border-light:#d0cec8;
+  --bg-page:#e2dfd7;
+  --tab-active:#1a1a1a;
+  --tab-inactive:#7a7874;
+}
+
+body{
+  font-family:'Noto Sans TC',sans-serif;
+  background:var(--bg-page);
+  min-height:100vh;
+  padding:28px 16px 40px;
+  color:var(--ink);
+}
+
+/* ── System header ── */
+.sys-header{
+  max-width:900px;
+  margin:0 auto 18px;
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+}
+.sys-title{
+  font-size:13px;
+  letter-spacing:.25em;
+  color:var(--gray);
+  text-transform:uppercase;
+}
+.sys-logo{
+  font-size:18px;
+  font-weight:700;
+  letter-spacing:.15em;
+  color:var(--ink);
+  line-height:1;
+}
+
+/* ── Tab bar ── */
+.tab-bar{
+  max-width:900px;
+  margin:0 auto 0;
+  display:flex;
+  gap:0;
+}
+.tab{
+  padding:9px 28px;
+  font-family:inherit;
+  font-size:14px;
+  font-weight:500;
+  letter-spacing:.1em;
+  cursor:pointer;
+  border:1.5px solid var(--ink);
+  border-bottom:none;
+  background:#ccc9c0;
+  color:var(--tab-inactive);
+  transition:all .15s;
+  position:relative;
+  top:1.5px;
+}
+.tab:hover{background:#d8d4cb;}
+.tab.active{
+  background:#fff;
+  color:var(--ink);
+  font-weight:700;
+  z-index:2;
+}
+.tab+.tab{border-left:none;}
+
+/* ── Sheet ── */
+.sheet{
+  max-width:900px;
+  margin:0 auto;
+  background:#fff;
+  border:1.5px solid var(--ink);
+  box-shadow:5px 5px 0 #aaa8a0;
+  display:none;
+  position:relative;
+  z-index:1;
+}
+.sheet.active{display:block;}
+
+/* ── Sheet inner header ── */
+.sheet-header{
+  display:grid;
+  grid-template-columns:220px 1fr;
+  border-bottom:2px solid var(--ink);
+}
+.co-info{
+  padding:13px 15px;
+  border-right:2px solid var(--ink);
+  font-size:12px;
+  line-height:1.75;
+  color:#444;
+}
+.co-name{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:1px;}
+.sheet-doc-title{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  padding:14px 22px;
+}
+.sheet-doc-title h1{
+  font-size:23px;
+  font-weight:700;
+  letter-spacing:.55em;
+  color:var(--ink);
+}
+
+/* ── Meta row ── */
+.meta-row{
+  display:grid;
+  border-bottom:1.5px solid var(--ink);
+}
+.meta-row.cols-6{grid-template-columns:1fr 1.3fr 1fr 1fr 1.2fr 1.4fr;}
+.meta-cell{border-right:1px solid var(--border);padding:0;}
+.meta-cell:last-child{border-right:none;}
+.cell-label{
+  background:#2c2c2c;
+  color:#fff;
+  font-size:12px;
+  padding:4px 7px;
+  font-weight:500;
+  letter-spacing:.05em;
+}
+.cell-input{
+  width:100%;border:none;outline:none;
+  font-family:inherit;font-size:14px;
+  padding:5px 7px;background:transparent;color:var(--ink);
+}
+.cell-checks{
+  display:flex;gap:8px;align-items:center;
+  padding:5px 7px;font-size:13px;flex-wrap:wrap;
+}
+.cell-checks label{display:flex;align-items:center;gap:3px;cursor:pointer;white-space:nowrap;}
+
+/* ── Job row ── */
+.job-row{
+  display:grid;
+  grid-template-columns:2fr 1fr 1.5fr;
+  border-bottom:1.5px solid var(--ink);
+}
+.job-cell{border-right:1px solid var(--border);padding:0;}
+.job-cell:last-child{border-right:none;}
+.job-input{
+  width:100%;border:none;outline:none;
+  font-family:inherit;font-size:15px;font-weight:500;
+  padding:5px 8px;background:transparent;color:var(--ink);
+}
+
+/* ── Section header ── */
+.sec-hdr{
+  background:var(--ink);
+  color:#fff;
+  font-size:14px;
+  font-weight:700;
+  letter-spacing:.22em;
+  padding:6px 12px;
+}
+
+/* ── Table ── */
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead th{
+  background:#ece9e2;
+  font-size:12px;font-weight:600;
+  padding:5px 7px;
+  border:1px solid var(--border);
+  text-align:center;white-space:nowrap;
+}
+tbody td{
+  border:1px solid var(--border-light);
+  padding:0;
+  vertical-align:middle;
+}
+tbody tr:nth-child(even) td{background:#faf9f6;}
+tbody td input[type="text"],tbody td textarea{
+  width:100%;border:none;outline:none;
+  font-family:inherit;font-size:13px;
+  padding:5px 6px;background:transparent;color:var(--ink);
+  resize:none;
+}
+.plate-opts{
+  display:flex;gap:6px;padding:4px 6px;flex-wrap:wrap;
+}
+.plate-opts label{
+  font-size:12px;display:flex;align-items:center;gap:2px;cursor:pointer;white-space:nowrap;
+}
+
+/* ── Add row btn ── */
+.add-btn{
+  display:flex;align-items:center;justify-content:center;gap:4px;
+  width:100%;padding:4px;
+  border:1px dashed var(--border);border-top:none;
+  background:#fafaf7;color:var(--gray);
+  font-family:inherit;font-size:12px;cursor:pointer;
+  transition:background .15s;
+}
+.add-btn:hover{background:#f0eeea;}
+
+/* ── Process grid (後加工) ── */
+.process-wrap{padding:12px 16px;}
+.process-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:7px 24px;
+}
+.proc-item{
+  display:flex;align-items:center;gap:5px;
+  font-size:14px;
+}
+.proc-item input[type="checkbox"]{
+  width:15px;height:15px;
+  accent-color:var(--ink);cursor:pointer;flex-shrink:0;
+}
+.proc-label{white-space:nowrap;cursor:pointer;color:var(--ink);}
+.proc-detail{
+  flex:1;border:none;border-bottom:1px solid #ccc;
+  outline:none;font-family:inherit;font-size:12px;
+  padding:1px 3px;background:transparent;min-width:0;color:var(--ink);
+}
+
+/* ── Remarks ── */
+.remarks-wrap{border-top:1.5px solid var(--ink);}
+.remarks-lbl{
+  background:#2c2c2c;color:#fff;
+  font-size:13px;font-weight:600;
+  padding:4px 12px;letter-spacing:.1em;
+}
+.remarks-ta{
+  width:100%;min-height:60px;border:none;outline:none;
+  font-family:inherit;font-size:14px;
+  padding:7px 12px;resize:vertical;color:var(--ink);
+}
+
+/* ── Sign-off ── */
+.signoff-row{
+  display:grid;
+  border-top:1.5px solid var(--ink);
+}
+.signoff-row.cols-4{grid-template-columns:repeat(4,1fr);}
+.sig-cell{border-right:1px solid var(--border);padding:0;}
+.sig-cell:last-child{border-right:none;}
+.sig-lbl{
+  background:#2c2c2c;color:#fff;
+  font-size:12px;padding:4px 7px;
+  text-align:center;font-weight:500;
+}
+.sig-area{
+  height:44px;display:flex;align-items:center;justify-content:center;
+}
+.sig-area input{
+  width:85%;border:none;border-bottom:1px solid #ccc;outline:none;
+  font-family:inherit;font-size:13px;text-align:center;background:transparent;
+}
+
+/* ── Footer ── */
+.sheet-footer{
+  border-top:1.5px solid var(--ink);
+  padding:5px 13px;
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:11px;color:#888;
+}
+.pg-input{
+  font-family:inherit;font-size:11px;border:none;
+  border-bottom:1px solid #ccc;width:16px;text-align:center;
+  background:transparent;outline:none;
+}
+
+/* ── Toolbar ── */
+.toolbar{
+  max-width:900px;
+  margin:18px auto 0;
+  display:flex;gap:10px;justify-content:flex-end;
+}
+.btn{
+  font-family:'Noto Sans TC',sans-serif;
+  font-size:14px;letter-spacing:.08em;
+  padding:10px 24px;cursor:pointer;
+  border:1.5px solid var(--ink);
+  transition:all .15s;
+}
+.btn-clear{background:#fff;color:var(--ink);}
+.btn-clear:hover{background:#f0eeea;}
+.btn-print{background:var(--ink);color:#fff;}
+.btn-print:hover{background:#333;}
+.btn-pdf{background:#3a3a3a;color:#fff;border-color:#3a3a3a;}
+.btn-pdf:hover{background:#555;}
+
+/* ── Print ── */
+@media print{
+  body{background:#fff;padding:0;}
+  .tab-bar,.toolbar,.sys-header,.add-btn{display:none!important;}
+  .sheet{display:none!important;box-shadow:none;border:none;}
+  .sheet.active{display:block!important;}
+  input,textarea{color:#000!important;}
+  @page{margin:8mm;size:A4;}
+}
+</style>
+</head>
+<body>
+
+<div class="sys-header">
+  <div>
+    <div class="sys-logo">里民承印</div>
+    <div class="sys-title">Liminprint Studio · 工單管理系統</div>
+  </div>
+</div>
+
+<!-- ── Tab bar ── -->
+<div class="tab-bar">
+  <button class="tab active" onclick="switchTab('ticket',this)">工 作 傳 票</button>
+  <button class="tab" onclick="switchTab('finishing',this)">後 加 工 單</button>
+</div>
+
+<!-- ════════════════════════════════════════
+     SHEET 1：工作傳票
+════════════════════════════════════════ -->
+<div class="sheet active" id="sheet-ticket">
+
+  <div class="sheet-header">
+    <div class="co-info">
+      <div class="co-name">亦信商標股份有限公司</div>
+      <div>地址：新北市泰山區貴鳳街3號5樓</div>
+      <div>統編：23163342</div>
+      <div>電話：02-2201-8103　FAX：02-2201-7577</div>
+    </div>
+    <div class="sheet-doc-title"><h1>里 民 承 印 工 作 傳 票</h1></div>
+  </div>
+
+  <!-- 基本資訊 -->
+  <div class="meta-row cols-6">
+    <div class="meta-cell">
+      <div class="cell-label">客戶代號</div>
+      <input class="cell-input" type="text" placeholder="">
+    </div>
+    <div class="meta-cell">
+      <div class="cell-label">工單編號</div>
+      <input class="cell-input" type="text" placeholder="LM-">
+    </div>
+    <div class="meta-cell">
+      <div class="cell-label">工單日期</div>
+      <input class="cell-input t-date" type="date">
+    </div>
+    <div class="meta-cell">
+      <div class="cell-label">交貨日期</div>
+      <input class="cell-input" type="date">
+    </div>
+    <div class="meta-cell">
+      <div class="cell-label">業務／客服</div>
+      <input class="cell-input" type="text" placeholder="陳S Wen">
+    </div>
+    <div class="meta-cell">
+      <div class="cell-label">品管要求</div>
+      <div class="cell-checks">
+        <label><input type="checkbox"> 看印刷</label>
+        <label><input type="checkbox"> 照樣印</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- 印件 -->
+  <div class="job-row">
+    <div class="job-cell">
+      <div class="cell-label">印件名稱</div>
+      <input class="job-input" type="text" placeholder="">
+    </div>
+    <div class="job-cell">
+      <div class="cell-label">印製數量</div>
+      <input class="job-input" type="text" placeholder="張">
+    </div>
+    <div class="job-cell">
+      <div class="cell-label">成品規格（寬 × 高 mm）</div>
+      <input class="job-input" type="text" placeholder="W × H mm">
+    </div>
+  </div>
+
+  <!-- 製版 -->
+  <div class="sec-hdr">製　　版</div>
+  <table id="t-plate">
+    <thead><tr>
+      <th style="width:60px">廠商</th>
+      <th>版別／品項</th>
+      <th style="width:52px">版數</th>
+      <th style="width:70px">色數</th>
+      <th style="width:100px">拚模規格</th>
+      <th>備註</th>
+    </tr></thead>
+    <tbody>
+      <tr>
+        <td><input type="text" placeholder="家昌"></td>
+        <td><div class="plate-opts">
+          <label><input type="checkbox"> 數位樣</label>
+          <label><input type="checkbox" checked> 電子樣</label>
+          <label><input type="checkbox" checked> 新版</label>
+          <label><input type="checkbox"> 舊版</label>
+          <label><input type="checkbox"> 留版</label>
+          <label><input type="checkbox"> 改版</label>
+        </div></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+      </tr>
+    </tbody>
+  </table>
+  <button class="add-btn" onclick="addPlateRow('t-plate')">＋ 新增製版列</button>
+
+  <!-- 紙張 -->
+  <div class="sec-hdr">紙　　張</div>
+  <table id="t-paper">
+    <thead><tr>
+      <th style="width:60px">廠商</th>
+      <th>紙名／品項</th>
+      <th style="width:75px">磅數／克重</th>
+      <th style="width:70px">料號／紙色</th>
+      <th style="width:75px">叫紙張數</th>
+      <th style="width:110px">紙張規格</th>
+      <th>備註</th>
+    </tr></thead>
+    <tbody>
+      <tr>
+        <td><input type="text" placeholder="立昌"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+      </tr>
+      <tr>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+      </tr>
+    </tbody>
+  </table>
+  <button class="add-btn" onclick="addSimpleRow('t-paper',7)">＋ 新增紙張列</button>
+
+  <!-- 印刷 -->
+  <div class="sec-hdr">印　　刷</div>
+  <table id="t-print">
+    <thead><tr>
+      <th style="width:60px">廠商</th>
+      <th style="width:80px">印刷色數</th>
+      <th style="width:120px">印刷尺寸</th>
+      <th style="width:50px">模數</th>
+      <th style="width:50px">台數</th>
+      <th style="width:80px">實數（張）</th>
+      <th style="width:70px">放損數</th>
+      <th>備註</th>
+    </tr></thead>
+    <tbody>
+      <tr>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+      </tr>
+      <tr>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+      </tr>
+    </tbody>
+  </table>
+  <button class="add-btn" onclick="addSimpleRow('t-print',8)">＋ 新增印刷列</button>
+
+  <!-- 後加工 -->
+  <div class="sec-hdr">上 光 ／ 後 加 工</div>
+  <table id="t-finish">
+    <thead><tr>
+      <th style="width:120px">加工項目</th>
+      <th>規格說明</th>
+      <th style="width:75px">數量</th>
+      <th style="width:65px">廠商</th>
+      <th>備註</th>
+    </tr></thead>
+    <tbody>
+      <tr>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+      </tr>
+      <tr>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+      </tr>
+      <tr>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+      </tr>
+    </tbody>
+  </table>
+  <button class="add-btn" onclick="addSimpleRow('t-finish',5)">＋ 新增後加工列</button>
+
+  <!-- 備註 -->
+  <div class="remarks-wrap">
+    <div class="remarks-lbl">備　　註</div>
+    <textarea class="remarks-ta" rows="3" placeholder="輸入備註…"></textarea>
+  </div>
+
+  <!-- 簽核 -->
+  <div class="signoff-row cols-4">
+    <div class="sig-cell"><div class="sig-lbl">製作確認</div><div class="sig-area"><input type="text" placeholder="簽名"></div></div>
+    <div class="sig-cell"><div class="sig-lbl">印刷確認</div><div class="sig-area"><input type="text" placeholder="簽名"></div></div>
+    <div class="sig-cell"><div class="sig-lbl">後加工確認</div><div class="sig-area"><input type="text" placeholder="簽名"></div></div>
+    <div class="sig-cell"><div class="sig-lbl">品管／出貨確認</div><div class="sig-area"><input type="text" placeholder="簽名"></div></div>
+  </div>
+
+  <div class="sheet-footer">
+    <span>此工單為亦信商標有限公司（里民承印）內部生產用途，請妥善保管，如有疑問請洽業務人員。</span>
+    <span>P.&nbsp;<input class="pg-input" type="text" value="1">&nbsp;/&nbsp;<input class="pg-input" type="text" value="1"></span>
+  </div>
+
+</div><!-- end sheet-ticket -->
+
+
+<!-- ════════════════════════════════════════
+     SHEET 2：後加工單
+════════════════════════════════════════ -->
+<div class="sheet" id="sheet-finishing">
+
+  <div class="sheet-header">
+    <div class="co-info">
+      <div class="co-name">亦信商標股份有限公司</div>
+      <div>地址：新北市泰山區貴鳳街3號5樓</div>
+      <div>統編：23163342</div>
+      <div>電話：02-2201-8103　FAX：02-2201-7577</div>
+    </div>
+    <div class="sheet-doc-title"><h1>里 民 承 印 後 加 工 單</h1></div>
+  </div>
+
+  <!-- 基本資訊 -->
+  <div class="meta-row cols-6">
+    <div class="meta-cell">
+      <div class="cell-label">客戶代號</div>
+      <input class="cell-input" type="text" placeholder="">
+    </div>
+    <div class="meta-cell">
+      <div class="cell-label">工單編號</div>
+      <input class="cell-input" type="text" placeholder="LM-">
+    </div>
+    <div class="meta-cell">
+      <div class="cell-label">工單日期</div>
+      <input class="cell-input f-date" type="date">
+    </div>
+    <div class="meta-cell">
+      <div class="cell-label">交貨日期</div>
+      <input class="cell-input" type="date">
+    </div>
+    <div class="meta-cell">
+      <div class="cell-label">業務／客服</div>
+      <input class="cell-input" type="text" placeholder="陳S Wen">
+    </div>
+    <div class="meta-cell">
+      <div class="cell-label">品管要求</div>
+      <div class="cell-checks">
+        <label><input type="checkbox"> 看印刷</label>
+        <label><input type="checkbox"> 附樣</label>
+        <label><input type="checkbox"> 參照圖面</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- 印件 -->
+  <div class="job-row">
+    <div class="job-cell">
+      <div class="cell-label">印件名稱</div>
+      <input class="job-input" type="text" placeholder="">
+    </div>
+    <div class="job-cell">
+      <div class="cell-label">製作數量</div>
+      <input class="job-input" type="text" placeholder="張">
+    </div>
+    <div class="job-cell">
+      <div class="cell-label">成品規格（寬 × 高 mm）</div>
+      <input class="job-input" type="text" placeholder="W × H mm">
+    </div>
+  </div>
+
+  <!-- 製版 -->
+  <div class="sec-hdr">製　　版</div>
+  <table id="f-plate">
+    <thead><tr>
+      <th style="width:60px">廠商</th>
+      <th>版別／品項</th>
+      <th style="width:52px">版數</th>
+      <th style="width:52px">色數</th>
+      <th style="width:100px">拚模規格</th>
+      <th>備註</th>
+    </tr></thead>
+    <tbody>
+      <tr>
+        <td><input type="text"></td>
+        <td><div class="plate-opts">
+          <label><input type="checkbox"> 對位片</label>
+          <label><input type="checkbox"> 電子樣</label>
+        </div></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+      </tr>
+      <tr>
+        <td><input type="text"></td>
+        <td><div class="plate-opts">
+          <label><input type="checkbox"> 新版</label>
+          <label><input type="checkbox"> 舊版</label>
+          <label><input type="checkbox"> 留版</label>
+          <label><input type="checkbox"> 改版</label>
+        </div></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+      </tr>
+    </tbody>
+  </table>
+  <button class="add-btn" onclick="addPlateRow('f-plate')">＋ 新增製版列</button>
+
+  <!-- 紙張 -->
+  <div class="sec-hdr">紙　　張</div>
+  <table id="f-paper">
+    <thead><tr>
+      <th style="width:60px">廠商</th>
+      <th>紙名／品項</th>
+      <th style="width:75px">磅數／克重</th>
+      <th style="width:70px">料號／紙色</th>
+      <th style="width:65px">張數</th>
+      <th style="width:110px">紙張規格</th>
+      <th>備註</th>
+    </tr></thead>
+    <tbody>
+      <tr>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+      </tr>
+      <tr>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+      </tr>
+    </tbody>
+  </table>
+  <button class="add-btn" onclick="addSimpleRow('f-paper',7)">＋ 新增紙張列</button>
+
+  <!-- 印刷 -->
+  <div class="sec-hdr">印　　刷</div>
+  <table id="f-print">
+    <thead><tr>
+      <th style="width:60px">廠商</th>
+      <th style="width:80px">印刷色數</th>
+      <th style="width:120px">印刷尺寸</th>
+      <th style="width:50px">模數</th>
+      <th style="width:50px">台數</th>
+      <th style="width:80px">實數（張）</th>
+      <th style="width:70px">放損數</th>
+      <th>備註</th>
+    </tr></thead>
+    <tbody>
+      <tr>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+      </tr>
+      <tr>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+      </tr>
+    </tbody>
+  </table>
+  <button class="add-btn" onclick="addSimpleRow('f-print',8)">＋ 新增印刷列</button>
+
+  <!-- 加工項目 -->
+  <div class="sec-hdr">加　工　項　目</div>
+  <div class="process-wrap">
+    <div class="process-grid">
+      <div class="proc-item"><input type="checkbox" id="p-cut"><label class="proc-label" for="p-cut">裁切</label><input class="proc-detail" type="text"></div>
+      <div class="proc-item"><input type="checkbox" id="p-fold"><label class="proc-label" for="p-fold">摺紙</label><input class="proc-detail" type="text"></div>
+      <div class="proc-item"><input type="checkbox" id="p-bind"><label class="proc-label" for="p-bind">裝訂</label><input class="proc-detail" type="text"></div>
+      <div class="proc-item"><input type="checkbox" id="p-hole"><label class="proc-label" for="p-hole">打孔</label><input class="proc-detail" type="text"></div>
+      <div class="proc-item"><input type="checkbox" id="p-glue"><label class="proc-label" for="p-glue">背膠</label><input class="proc-detail" type="text"></div>
+      <div class="proc-item"><input type="checkbox" id="p-rope"><label class="proc-label" for="p-rope">穿繩</label><input class="proc-detail" type="text"></div>
+      <div class="proc-item"><input type="checkbox" id="p-score"><label class="proc-label" for="p-score">壓線</label><input class="proc-detail" type="text"></div>
+      <div class="proc-item"><input type="checkbox" id="p-mount"><label class="proc-label" for="p-mount">裱紙</label><input class="proc-detail" type="text"></div>
+      <div class="proc-item"><input type="checkbox" id="p-rivet"><label class="proc-label" for="p-rivet">打鉚釘扣</label><input class="proc-detail" type="text"></div>
+      <div class="proc-item"><input type="checkbox" id="p-round"><label class="proc-label" for="p-round">導圓角</label><input class="proc-detail" type="text"></div>
+      <div class="proc-item"><input type="checkbox" id="p-die"><label class="proc-label" for="p-die">軋型</label><input class="proc-detail" type="text"></div>
+      <div class="proc-item"><input type="checkbox" id="p-foil"><label class="proc-label" for="p-foil">燙金</label><input class="proc-detail" type="text"></div>
+      <div class="proc-item"><input type="checkbox" id="p-lam"><label class="proc-label" for="p-lam">覆膜</label><input class="proc-detail" type="text"></div>
+      <div class="proc-item"><input type="checkbox" id="p-emboss"><label class="proc-label" for="p-emboss">打凸</label><input class="proc-detail" type="text"></div>
+      <div class="proc-item"><input type="checkbox" id="p-glueh"><label class="proc-label" for="p-glueh">糊頭</label><input class="proc-detail" type="text"></div>
+      <div class="proc-item"><input type="checkbox" id="p-serial"><label class="proc-label" for="p-serial">流水號</label><input class="proc-detail" type="text"></div>
+      <div class="proc-item"><input type="checkbox" id="p-deboss"><label class="proc-label" for="p-deboss">打凹</label><input class="proc-detail" type="text"></div>
+      <div class="proc-item"><input type="checkbox" id="p-edge"><label class="proc-label" for="p-edge">刷邊</label><input class="proc-detail" type="text"></div>
+    </div>
+  </div>
+
+  <!-- 備註 -->
+  <div class="remarks-wrap">
+    <div class="remarks-lbl">備　　註</div>
+    <textarea class="remarks-ta" rows="3" placeholder="輸入備註…"></textarea>
+  </div>
+
+  <!-- 簽核 -->
+  <div class="signoff-row cols-4">
+    <div class="sig-cell"><div class="sig-lbl">印務確認</div><div class="sig-area"><input type="text" placeholder="簽名"></div></div>
+    <div class="sig-cell"><div class="sig-lbl">工務確認</div><div class="sig-area"><input type="text" placeholder="簽名"></div></div>
+    <div class="sig-cell"><div class="sig-lbl">後加工確認</div><div class="sig-area"><input type="text" placeholder="簽名"></div></div>
+    <div class="sig-cell"><div class="sig-lbl">業務簽核</div><div class="sig-area"><input type="text" placeholder="簽名"></div></div>
+  </div>
+
+  <div class="sheet-footer">
+    <span>此工單為亦信商標有限公司（里民承印）內部生產用途，請妥善保管，如有疑問請洽業務人員。</span>
+    <span>P.&nbsp;<input class="pg-input" type="text" value="1">&nbsp;/&nbsp;<input class="pg-input" type="text" value="2"></span>
+  </div>
+
+</div><!-- end sheet-finishing -->
+
+
+<!-- ── Toolbar ── -->
+<div class="toolbar">
+  <button class="btn btn-clear" onclick="clearCurrent()">清空表單</button>
+  <button class="btn btn-print" onclick="window.print()">🖨 列印</button>
+  <button class="btn btn-pdf" onclick="exportPDF()">↓ 下載 PDF</button>
+</div>
+
+
+<script>
+// ── Tab switch ──
+function switchTab(id, btn) {
+  document.querySelectorAll('.sheet').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('sheet-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── Add rows ──
+function addPlateRow(tableId) {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input type="text" placeholder="廠商"></td>
+    <td><div class="plate-opts">
+      <label><input type="checkbox"> 數位樣</label>
+      <label><input type="checkbox"> 電子樣</label>
+      <label><input type="checkbox"> 新版</label>
+      <label><input type="checkbox"> 舊版</label>
+      <label><input type="checkbox"> 留版</label>
+      <label><input type="checkbox"> 改版</label>
+    </div></td>
+    <td><input type="text"></td>
+    <td><input type="text"></td>
+    <td><input type="text"></td>
+    <td><input type="text"></td>`;
+  document.querySelector('#' + tableId + ' tbody').appendChild(tr);
+}
+function addSimpleRow(tableId, cols) {
+  const tr = document.createElement('tr');
+  let cells = '';
+  for (let i = 0; i < cols; i++) cells += '<td><input type="text"></td>';
+  tr.innerHTML = cells;
+  document.querySelector('#' + tableId + ' tbody').appendChild(tr);
+}
+
+// ── Clear current sheet ──
+function clearCurrent() {
+  if (!confirm('確定要清空此工單嗎？')) return;
+  const sheet = document.querySelector('.sheet.active');
+  sheet.querySelectorAll('input[type="text"], textarea').forEach(el => el.value = '');
+  sheet.querySelectorAll('input[type="checkbox"]').forEach(el => el.checked = false);
+  sheet.querySelectorAll('input[type="date"]').forEach(el => el.value = '');
+  // reset today
+  const d = sheet.querySelector('input[type="date"]');
+  if (d) d.value = new Date().toISOString().split('T')[0];
+}
+
+// ── PDF export ──
+function exportPDF() {
+  const sheet = document.querySelector('.sheet.active');
+  const inputs = sheet.querySelectorAll('input[type="text"], input[type="date"], textarea');
+  const stored = [];
+  inputs.forEach(el => {
+    stored.push(el);
+    const sp = document.createElement('span');
+    sp.className = '__pv';
+    sp.style.cssText = 'font-size:11px;font-family:inherit;display:block;min-height:14px;';
+    sp.textContent = el.value || '';
+    el.parentNode.insertBefore(sp, el);
+    el.style.display = 'none';
+  });
+  const checks = sheet.querySelectorAll('input[type="checkbox"]');
+  checks.forEach(el => {
+    const sp = document.createElement('span');
+    sp.className = '__pc';
+    sp.textContent = el.checked ? '☑ ' : '□ ';
+    sp.style.marginRight = '2px';
+    el.parentNode.insertBefore(sp, el);
+    el.style.display = 'none';
+  });
+  document.querySelectorAll('.add-btn,.toolbar,.tab-bar,.sys-header').forEach(b => b.style.display = 'none');
+
+  // get a name for file
+  const orderInput = sheet.querySelector('input[placeholder="LM-"]');
+  const fname = orderInput ? (orderInput.value || '工單') : '工單';
+
+  html2pdf().set({
+    margin: [6,6,6,6],
+    filename: `里民承印_${fname}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  }).from(sheet).save().then(() => {
+    stored.forEach(el => el.style.display = '');
+    checks.forEach(el => el.style.display = '');
+    sheet.querySelectorAll('.__pv, .__pc').forEach(s => s.remove());
+    document.querySelectorAll('.add-btn,.toolbar,.tab-bar,.sys-header').forEach(b => b.style.display = '');
+  });
+}
+
+// ── Init dates ──
+(function(){
+  const today = new Date().toISOString().split('T')[0];
+  document.querySelectorAll('.t-date, .f-date').forEach(el => el.value = today);
+})();
+</script>
+</body>
+</html>
