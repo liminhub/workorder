@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>里民承印 · 工單系統</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Noto+Serif+TC:wght@400;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -37,7 +36,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);min-height:100vh
 .tab+.tab{border-left:none}
 
 /* ── Sheet ── */
-.sheet{max-width:960px;background:var(--white);border:1.5px solid var(--ink);box-shadow:var(--shadow);display:none;position:relative;z-index:1}
+.sheet{max-width:960px;background:var(--white);border:1.5px solid var(--ink);box-shadow:var(--shadow);display:none;position:relative;z-index:1;overflow:hidden}
 .sheet.active{display:block}
 
 /* ── Sheet Header ── */
@@ -50,7 +49,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);min-height:100vh
 .doc-title{font-size:21px;font-weight:700;letter-spacing:.45em;color:var(--ink)}
 
 /* ── Recipient Block ── */
-.recipient-block{border-right:1px solid var(--border);padding:10px 14px;font-size:11px;line-height:1.75;background:var(--pale);position:relative}
+.recipient-block{border-right:1px solid var(--border);padding:10px 14px;font-size:11px;line-height:1.75;background:var(--pale);position:relative;min-height:80px}
 .recipient-label{font-size:9px;font-weight:700;letter-spacing:.15em;color:var(--ink-lt);text-transform:uppercase;margin-bottom:4px}
 .recipient-select{width:100%;border:none;border-bottom:1.5px solid var(--ink);outline:none;font-family:inherit;font-size:13px;font-weight:500;padding:2px 4px;background:transparent;cursor:pointer;color:var(--ink);margin-bottom:6px}
 .recipient-info{font-size:11px;color:var(--ink-mid);line-height:1.7;min-height:36px}
@@ -59,11 +58,12 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);min-height:100vh
 /* ── Urgent Badge ── */
 .urgent-wrap{position:absolute;top:10px;right:10px}
 .urgent-badge{
-  background:transparent;color:var(--red);border:2px solid var(--red);
+  background:transparent;color:#bbb;border:2px solid #ccc;
   font-size:12px;font-weight:700;padding:4px 10px;letter-spacing:.1em;
-  cursor:pointer;user-select:none;transition:all .2s;opacity:.3;
+  cursor:pointer;user-select:none;transition:all .2s;
+  title:"點擊標記急件";
 }
-.urgent-badge.on{ opacity:1; }
+.urgent-badge.on{ color:var(--red);border-color:var(--red); }
 .urgent-bar{
   display:none;width:100%;background:var(--red);color:#fff;
   text-align:center;font-size:15px;font-weight:700;letter-spacing:.4em;
@@ -80,7 +80,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);min-height:100vh
 .mc-lbl{background:#2a2a28;color:#fff;font-size:11px;padding:4px 8px;font-weight:500;letter-spacing:.06em}
 .mc-lbl.green{background:var(--green-dk)}
 .mc-lbl.amber{background:var(--amber)}
-.mc-inp{width:100%;border:none;outline:none;font-family:inherit;font-size:13px;padding:5px 8px;background:transparent;color:var(--ink)}
+.mc-inp{width:100%;border:none;outline:none;font-family:inherit;font-size:13px;padding:6px 8px;background:transparent;color:var(--ink)}
 .mc-checks{display:flex;gap:8px;align-items:center;padding:5px 8px;font-size:12px;flex-wrap:wrap}
 .mc-checks label{display:flex;align-items:center;gap:3px;cursor:pointer;white-space:nowrap}
 
@@ -88,7 +88,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);min-height:100vh
 .job-row{display:grid;grid-template-columns:2fr 1fr 1.4fr;border-bottom:1.5px solid var(--ink)}
 .jc{border-right:1px solid var(--border)}
 .jc:last-child{border-right:none}
-.job-inp{width:100%;border:none;outline:none;font-family:inherit;font-size:15px;font-weight:500;padding:6px 8px;background:transparent;color:var(--ink)}
+.job-inp{width:100%;border:none;outline:none;font-family:inherit;font-size:15px;font-weight:500;padding:8px 8px;background:transparent;color:var(--ink)}
 
 /* ── Section Header ── */
 .sec-hdr{background:var(--ink);color:#fff;font-size:13px;font-weight:700;letter-spacing:.25em;padding:6px 12px;display:flex;align-items:center;justify-content:space-between}
@@ -98,22 +98,22 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);min-height:100vh
 .sec-hdr.amber{background:var(--amber)}
 
 /* ── Table ── */
-table{width:100%;border-collapse:collapse;font-size:12.5px}
-thead th{background:#eae7e0;font-size:11px;font-weight:600;padding:5px 7px;border:1px solid var(--border);text-align:center;white-space:nowrap;letter-spacing:.05em}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{background:#eae7e0;font-size:11.5px;font-weight:600;padding:5px 7px;border:1px solid var(--border);text-align:center;white-space:nowrap;letter-spacing:.05em}
 tbody td{border:1px solid var(--border-lt);padding:0;vertical-align:middle}
 tbody tr:nth-child(even) td{background:#faf9f6}
-tbody td input[type="text"],tbody td select,tbody td textarea{width:100%;border:none;outline:none;font-family:inherit;font-size:12.5px;padding:5px 6px;background:transparent;color:var(--ink);resize:none}
+tbody td input[type="text"],tbody td select,tbody td textarea{width:100%;border:none;outline:none;font-family:inherit;font-size:13px;padding:5px 6px;background:transparent;color:var(--ink);resize:none}
 .plate-opts{display:flex;gap:6px;padding:4px 6px;flex-wrap:wrap}
 .plate-opts label{font-size:11.5px;display:flex;align-items:center;gap:2px;cursor:pointer;white-space:nowrap}
 .del-btn{width:24px;height:24px;border:1px solid #ddd;background:#fff;color:#aaa;cursor:pointer;font-size:13px;margin:2px auto;display:block;transition:all .15s}
 .del-btn:hover{background:#fee;border-color:#faa;color:#c33}
 
 /* ── Next Station ── */
-.next-station{background:var(--amber-lt);border-top:none;padding:10px 14px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.next-station{background:var(--amber-lt);border-top:none;padding:12px 14px;display:grid;grid-template-columns:1.4fr 1.2fr 1.2fr;gap:14px}
 .ns-field{display:flex;flex-direction:column;gap:3px}
 .ns-lbl{font-size:10px;font-weight:600;color:var(--amber);letter-spacing:.1em;text-transform:uppercase}
 .ns-inp{border:none;border-bottom:1.5px solid var(--amber);outline:none;font-family:inherit;font-size:13px;padding:3px 4px;background:transparent;color:var(--ink);width:100%}
-.ns-info{font-size:11px;color:var(--amber);margin-top:3px;line-height:1.5;min-height:16px}
+.ns-info{font-size:11px;color:var(--amber);margin-top:4px;line-height:1.65;min-height:18px;word-break:break-all}
 
 /* ── Process ── */
 .proc-wrap{padding:10px 14px}
@@ -163,10 +163,10 @@ tbody td input[type="text"],tbody td select,tbody td textarea{width:100%;border:
 .be-pane.active{display:block}
 .be-section-title{font-size:13px;font-weight:700;letter-spacing:.1em;margin-bottom:10px;color:var(--green-dk);border-bottom:1px solid var(--border-lt);padding-bottom:6px;margin-top:18px}
 .be-section-title:first-child{margin-top:0}
-.be-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:10px}
+.be-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:10px;table-layout:fixed}
 .be-table th{background:#eae7e0;padding:6px 10px;border:1px solid var(--border);font-weight:600;text-align:left;font-size:11px;letter-spacing:.05em}
 .be-table td{border:1px solid var(--border-lt);padding:0}
-.be-table td input,.be-table td select{width:100%;border:none;outline:none;font-family:inherit;font-size:12px;padding:5px 8px;background:transparent}
+.be-table td input,.be-table td select{width:100%;border:none;outline:none;font-family:inherit;font-size:12px;padding:5px 8px;background:transparent;min-width:0}
 .be-table td input:focus{background:var(--green-lt)}
 .be-table .del-btn{margin:3px auto}
 .be-add-row{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap}
@@ -187,14 +187,98 @@ tbody td input[type="text"],tbody td select,tbody td textarea{width:100%;border:
 .toast{position:fixed;bottom:24px;right:24px;background:var(--green-dk);color:#fff;padding:10px 20px;font-size:13px;letter-spacing:.06em;z-index:999;opacity:0;transform:translateY(8px);transition:all .3s;pointer-events:none}
 .toast.show{opacity:1;transform:translateY(0)}
 
+/* ── PDF Export Mode ── */
+.pdf-export .sheet{
+  box-shadow:none!important;
+  max-width:none!important;
+  overflow:visible!important;
+  border:1.5px solid var(--ink)!important;
+}
+.pdf-export .tab-bar,
+.pdf-export .toolbar,
+.pdf-export .sys-top,
+.pdf-export .backend,
+.pdf-export .del-btn,
+.pdf-export .sec-hdr-add,
+.pdf-export .recipient-select,
+.pdf-export .urgent-wrap{display:none!important}
+
 /* ── Print ── */
 @media print{
-  body{background:#fff;padding:0}
-  .tab-bar,.toolbar,.sys-top,.backend,.del-btn,.sec-hdr-add,.recipient-select{display:none!important}
-  .sheet{display:none!important;box-shadow:none}
-  .sheet.active{display:block!important}
-  input,textarea,select{color:#000!important}
-  @page{margin:8mm;size:A4}
+  *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  
+  html, body{
+    background:#fff!important;
+    padding:0!important;
+    margin:0!important;
+    width:210mm;
+  }
+
+  /* 隱藏所有非工單元素 */
+  .tab-bar,
+  .toolbar,
+  .sys-top,
+  .sys-wrap > .tab-bar,
+  .backend,
+  .del-btn,
+  .sec-hdr-add,
+  .urgent-wrap,
+  .mode-btns,
+  .toast{ display:none!important; }
+
+  /* 隱藏非作用中的工單 */
+  .sheet{ display:none!important; box-shadow:none!important; border:none!important; }
+  .sheet.active{
+    display:block!important;
+    width:100%!important;
+    max-width:100%!important;
+    box-shadow:none!important;
+    overflow:visible!important;
+    margin:0!important;
+    border:1.5px solid #1a1a18!important;
+  }
+
+  /* 隱藏廠商下拉（列印只看 recipient-info 文字） */
+  .recipient-select{ display:none!important; }
+  .recipient-info{ display:block!important; }
+
+  /* 確保顏色正確輸出 */
+  .sec-hdr{ background:#1a1a18!important; color:#fff!important; }
+  .sec-hdr.green{ background:#085041!important; }
+  .sec-hdr.amber{ background:#BA7517!important; }
+  .mc-lbl{ background:#2a2a28!important; color:#fff!important; }
+  .mc-lbl.green{ background:#085041!important; }
+  .mc-lbl.amber{ background:#BA7517!important; }
+  .sc-lbl{ background:#2a2a28!important; color:#fff!important; }
+  .remarks-lbl{ background:#2a2a28!important; color:#fff!important; }
+  .be-head{ background:#085041!important; }
+  thead th{ background:#eae7e0!important; }
+  tbody tr:nth-child(even) td{ background:#faf9f6!important; }
+  .next-station{ background:#FFF3DC!important; }
+  .sheets-import{ background:#E1F5EE!important; }
+  .urgent-bar.show{
+    display:block!important;
+    background:#E24B4A!important;
+    color:#fff!important;
+  }
+
+  /* input / select 值要可見 */
+  input, textarea, select{
+    color:#000!important;
+    border-color:transparent!important;
+    background:transparent!important;
+  }
+
+  /* 上水光行確保完整顯示 */
+  .sheet.active > div[style*="上水光"],
+  .sheet.active > div[style*="grid-template-columns:auto"]{
+    display:grid!important;
+  }
+
+  @page{
+    size:A4 portrait;
+    margin:8mm;
+  }
 }
 </style>
 </head>
@@ -308,8 +392,9 @@ tbody td input[type="text"],tbody td select,tbody td textarea{width:100%;border:
     <div class="sec-hdr">紙　　張<span class="sec-hdr-add" onclick="addRow('p-paper-body',paperCols)">＋ 新增</span></div>
     <table><thead><tr>
       <th style="width:90px">廠商</th><th>紙名／品項</th>
-      <th style="width:68px">磅數</th><th style="width:70px">料號／紙色</th>
-      <th style="width:68px">叫紙張數</th><th style="width:100px">紙張規格</th>
+      <th style="width:58px">磅數</th><th style="width:58px">厚度(μm)</th>
+      <th style="width:70px">料號／紙色</th>
+      <th style="width:60px">叫紙張數</th><th style="width:90px">紙張規格</th>
       <th>備註</th><th style="width:28px"></th>
     </tr></thead>
     <tbody id="p-paper-body">
@@ -318,6 +403,7 @@ tbody td input[type="text"],tbody td select,tbody td textarea{width:100%;border:
         <td><input type="text"></td><td><input type="text"></td>
         <td><input type="text"></td><td><input type="text"></td>
         <td><input type="text"></td><td><input type="text"></td>
+        <td><input type="text"></td>
         <td><button class="del-btn" onclick="delRow(this)">×</button></td>
       </tr>
       <tr>
@@ -325,6 +411,7 @@ tbody td input[type="text"],tbody td select,tbody td textarea{width:100%;border:
         <td><input type="text"></td><td><input type="text"></td>
         <td><input type="text"></td><td><input type="text"></td>
         <td><input type="text"></td><td><input type="text"></td>
+        <td><input type="text"></td>
         <td><button class="del-btn" onclick="delRow(this)">×</button></td>
       </tr>
     </tbody></table>
@@ -348,6 +435,18 @@ tbody td input[type="text"],tbody td select,tbody td textarea{width:100%;border:
       </tr>
     </tbody></table>
 
+    <!-- 上水光 -->
+    <div style="background:var(--pale);border-bottom:1.5px solid var(--ink);padding:8px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="font-size:10px;font-weight:700;letter-spacing:.12em;color:var(--ink-lt);text-transform:uppercase;white-space:nowrap;min-width:52px">上　水　光</span>
+      <label style="display:flex;align-items:center;gap:3px;font-size:13px;cursor:pointer"><input type="checkbox"> 全面上光</label>
+      <label style="display:flex;align-items:center;gap:3px;font-size:13px;cursor:pointer"><input type="checkbox"> 局部上光</label>
+      <label style="display:flex;align-items:center;gap:3px;font-size:13px;cursor:pointer"><input type="checkbox"> 亮光</label>
+      <label style="display:flex;align-items:center;gap:3px;font-size:13px;cursor:pointer"><input type="checkbox"> 霧光</label>
+      <label style="display:flex;align-items:center;gap:3px;font-size:13px;cursor:pointer"><input type="checkbox"> UV光</label>
+      <span style="font-size:11px;color:var(--ink-lt);margin-left:4px">廠商</span>
+      <select id="coating-vendor" style="border:none;border-bottom:1.5px solid var(--amber);outline:none;font-family:inherit;font-size:12px;padding:2px 4px;background:transparent;color:var(--ink)"><option value="">選擇</option></select>
+      <input type="text" id="coating-note" placeholder="說明" style="flex:1;min-width:80px;border:none;border-bottom:1px solid #ccc;outline:none;font-family:inherit;font-size:12px;padding:2px 4px;background:transparent">
+    </div>
     <!-- 下一站 -->
     <div class="sec-hdr amber">下 一 站 交 接</div>
     <div class="next-station">
@@ -448,7 +547,7 @@ tbody td input[type="text"],tbody td select,tbody td textarea{width:100%;border:
     <!-- 來料 -->
     <div class="sec-hdr green">來 料 資 訊</div>
     <div class="meta-strip" style="grid-template-columns:1fr 1fr 1fr">
-      <div class="mc"><div class="mc-lbl green">來料廠商</div><select class="mc-inp"><option value="">選擇</option></select></div>
+      <div class="mc"><div class="mc-lbl green">來料廠商</div><select class="mc-inp" id="f-incoming-vendor"><option value="">選擇</option></select></div>
       <div class="mc"><div class="mc-lbl green">來料規格</div><input class="mc-inp" type="text" placeholder="印刷完成尺寸"></div>
       <div class="mc"><div class="mc-lbl green">來料數量</div><input class="mc-inp" type="text" placeholder="張"></div>
     </div>
@@ -466,6 +565,7 @@ tbody td input[type="text"],tbody td select,tbody td textarea{width:100%;border:
         <td><div class="plate-opts">
           <label><input type="checkbox"> 對位片</label>
           <label><input type="checkbox"> 電子樣</label>
+          <label><input type="checkbox"> 數位噴圖</label>
           <label><input type="checkbox"> 新版</label>
           <label><input type="checkbox"> 舊版</label>
           <label><input type="checkbox"> 留版</label>
@@ -551,7 +651,7 @@ tbody td input[type="text"],tbody td select,tbody td textarea{width:100%;border:
   <div class="toolbar">
     <button class="btn btn-ghost" onclick="clearSheet()">清　除</button>
     <button class="btn btn-ghost" onclick="window.print()">列　印</button>
-    <button class="btn btn-green" onclick="exportPDF()">下載 PDF</button>
+    <button class="btn btn-green" onclick="exportPDF()">列印 ／ PDF</button>
   </div>
 </div>
 
@@ -675,45 +775,473 @@ tbody td input[type="text"],tbody td select,tbody td textarea{width:100%;border:
 // State
 // ══════════════════════════════════════════
 const defaultVendors = {
-  plate: [
-    {name:'家昌',contact:'',phone:'',addr:''},
-    {name:'合信',contact:'',phone:'02-2953-4052',addr:''},
-    {name:'文鼎',contact:'',phone:'02-2223-9226',addr:''},
-    {name:'上源',contact:'',phone:'02-2255-7934',addr:''},
-    {name:'龍昇',contact:'',phone:'',addr:''},
+  "print": [
+    {
+      "name": "家速",
+      "contact": "林R",
+      "phone": "02-2226-3392#202",
+      "addr": "新北市中和區板南路498號2樓之6"
+    },
+    {
+      "name": "卡騰",
+      "contact": "王S",
+      "phone": "02-8221-7388",
+      "addr": "新北市中和區中板路5巷2弄6號"
+    },
+    {
+      "name": "豐聖",
+      "contact": "林S",
+      "phone": "02-2951-4996",
+      "addr": "新北市板橋區三民路一段99號"
+    },
+    {
+      "name": "柏荃",
+      "contact": "周S",
+      "phone": "02-2221-6377",
+      "addr": "新北市中和區立德街128號1樓"
+    },
+    {
+      "name": "柏豐",
+      "contact": "周S",
+      "phone": "02-2221-7979",
+      "addr": "新北市中和區立德街123號1樓"
+    },
+    {
+      "name": "威翔",
+      "contact": "張R",
+      "phone": "02-8245-5186",
+      "addr": "新北市中和區橋和路120之1-2號1樓"
+    },
+    {
+      "name": "盛章",
+      "contact": "黃R",
+      "phone": "02-2983-9975",
+      "addr": "新北市三重區仁愛街255巷34號1樓"
+    },
+    {
+      "name": "承漢",
+      "contact": "陳S",
+      "phone": "02-2243-8076",
+      "addr": "新北市中和區橋安街15巷1號5號"
+    },
+    {
+      "name": "名冠",
+      "contact": "林S",
+      "phone": "02-2225-9515",
+      "addr": "新北市中和區中板路15巷1號1樓"
+    },
+    {
+      "name": "三達",
+      "contact": "劉S",
+      "phone": "02-29974866",
+      "addr": "新北市新莊區化成路25號"
+    },
+    {
+      "name": "冠美",
+      "contact": "洪R",
+      "phone": "02-2903-3935",
+      "addr": "新北市新莊區鳳山街24巷1號"
+    },
+    {
+      "name": "蒝大雅",
+      "contact": "張S",
+      "phone": "02-2225-6595",
+      "addr": "新北市中和區立言街55號"
+    },
+    {
+      "name": "凌雲科技",
+      "contact": "黃S/錢S",
+      "phone": "02-2908-0827",
+      "addr": ""
+    }
   ],
-  knife: [
-    {name:'韋樺刀模',contact:'',phone:'',addr:''},
-    {name:'建利刀模',contact:'',phone:'02-2984-3405',addr:''},
-    {name:'中正刀模',contact:'',phone:'02-2687-2274',addr:''},
+  "digital": [
+    {
+      "name": "智業",
+      "contact": "謝R",
+      "phone": "02-2221-8896",
+      "addr": "新北市中和區橋和路15號8樓"
+    },
+    {
+      "name": "盈濤",
+      "contact": "邱R",
+      "phone": "02-2302-4159",
+      "addr": "台北市萬華區艋舺大道120巷11弄23號"
+    },
+    {
+      "name": "良偉",
+      "contact": "段S/張R",
+      "phone": "06-3843766#501",
+      "addr": "臺南市安南區本田路二段405號"
+    },
+    {
+      "name": "健豪",
+      "contact": "--",
+      "phone": "02-6626-1958",
+      "addr": "新北市新莊區化成路11巷16號"
+    },
+    {
+      "name": "全方位",
+      "contact": "翁S",
+      "phone": "02-2901-5008",
+      "addr": "新北市新莊區中正路587-1號"
+    },
+    {
+      "name": "印研所",
+      "contact": "王星又S",
+      "phone": "02-2225-1212",
+      "addr": "新北市中和區立德街148巷58號7樓"
+    },
+    {
+      "name": "卡之屋",
+      "contact": "陳S",
+      "phone": "02-2242-8330",
+      "addr": "新北市中和區中山路二段348巷4號1樓"
+    },
+    {
+      "name": "創河",
+      "contact": "洪佩琪S",
+      "phone": "02-8221-1955",
+      "addr": "新北市中和區立德街176號五樓"
+    },
+    {
+      "name": "裕順",
+      "contact": "張S",
+      "phone": "02-8953-8017",
+      "addr": "新北市板橋區萬安街53巷39號"
+    },
+    {
+      "name": "三方",
+      "contact": "子恩",
+      "phone": "02-2225-2887",
+      "addr": "新北市中和區建一路95號3樓"
+    },
+    {
+      "name": "乙元",
+      "contact": "游R",
+      "phone": "03-370-8500",
+      "addr": "桃園市桃園區龍壽街83巷13號"
+    },
+    {
+      "name": "億鋒",
+      "contact": "游R",
+      "phone": "02-2205-2576",
+      "addr": "新北市新莊區新樹路288-1號"
+    }
   ],
-  paper: [
-    {name:'源圓',contact:'',phone:'',addr:''},
-    {name:'恆成',contact:'',phone:'',addr:''},
-    {name:'聯美',contact:'',phone:'',addr:''},
-    {name:'竣揚',contact:'',phone:'',addr:''},
-    {name:'長瑩',contact:'',phone:'',addr:''},
-    {name:'商鉅',contact:'',phone:'',addr:''},
-    {name:'巨圓',contact:'',phone:'',addr:''},
+  "finish": [
+    {
+      "name": "翊銘",
+      "contact": "李R",
+      "phone": "02-2221-3899",
+      "addr": "新北市中和區中山路2段340巷40號1樓"
+    },
+    {
+      "name": "正義",
+      "contact": "林S",
+      "phone": "02-2964-0270",
+      "addr": "新北市板橋區翠華街6巷101號1樓"
+    },
+    {
+      "name": "得利",
+      "contact": "王S/簡R",
+      "phone": "02-2957-1580",
+      "addr": "新北市板橋區翠華街6巷103號"
+    },
+    {
+      "name": "弘采",
+      "contact": "邱R",
+      "phone": "02-2221-3628",
+      "addr": "新北市中和區立德街7巷14號"
+    },
+    {
+      "name": "弘大",
+      "contact": "田S",
+      "phone": "02-2225-1777",
+      "addr": "新北市中和區立德街28號2樓"
+    },
+    {
+      "name": "志助",
+      "contact": "陳S",
+      "phone": "02-2223-5997",
+      "addr": "新北市中和區中板路15巷13號5樓"
+    },
+    {
+      "name": "一式",
+      "contact": "余R",
+      "phone": "02-2225-5145",
+      "addr": "新北市中和區中板路18巷3弄19號"
+    },
+    {
+      "name": "祥利",
+      "contact": "張R",
+      "phone": "02-2222-9175",
+      "addr": "新北市中和區新民街85號"
+    },
+    {
+      "name": "威卡",
+      "contact": "李R",
+      "phone": "02-3234-7525",
+      "addr": "新北市中和區立德街98巷85、87號"
+    },
+    {
+      "name": "勝發",
+      "contact": "黃R",
+      "phone": "02-22510-2642",
+      "addr": "新北市板橋區田單街2巷12號"
+    },
+    {
+      "name": "世興",
+      "contact": "游R",
+      "phone": "02-29620827",
+      "addr": "新北市板橋區三民路2段245巷62號"
+    },
+    {
+      "name": "冠順",
+      "contact": "Nick",
+      "phone": "02-22266767",
+      "addr": "新北市中和區建康路170號1樓"
+    },
+    {
+      "name": "求典",
+      "contact": "黃R",
+      "phone": "02-3234-1886",
+      "addr": "新北市中和區立德街176號1樓"
+    },
+    {
+      "name": "同一",
+      "contact": "何S",
+      "phone": "02-2225-5033",
+      "addr": "新北市中和區中板路5巷2弄2號"
+    },
+    {
+      "name": "雅仕達",
+      "contact": "簡R",
+      "phone": "02-2223-6568",
+      "addr": "新北市中和區中板路47巷17號1樓"
+    },
+    {
+      "name": "如藝",
+      "contact": "郭R",
+      "phone": "02-2223-2587",
+      "addr": "新北市中和區中板路18巷1弄7號4樓"
+    },
+    {
+      "name": "台灣冊",
+      "contact": "黃R",
+      "phone": "02-2225-4920",
+      "addr": "新北市中和區中板路15巷10號"
+    },
+    {
+      "name": "宏基波麗",
+      "contact": "簡S",
+      "phone": "02-2208-3616",
+      "addr": "新北市新莊區新豐街20巷10號1樓"
+    }
   ],
-  print: [
-    {name:'家速彩色印刷',contact:'劉士緯',phone:'02-2226-3392',addr:'新北市中和區板南路498號2樓'},
-    {name:'卡騰實業',contact:'',phone:'02-8221-7388',addr:'新北市中和區中板路5巷2弄6號'},
-    {name:'豐聖彩色印刷',contact:'林禹利',phone:'02-2951-4996',addr:'新北市板橋區三民路一段99號'},
-    {name:'柏荃彩色印刷',contact:'',phone:'02-2221-6377',addr:'新北市中和區立德街128號1樓'},
-    {name:'柏豐彩色印刷',contact:'',phone:'02-2221-7979',addr:'新北市中和區立德街123號1樓'},
-    {name:'威翔包裝印刷',contact:'',phone:'02-8245-5186',addr:'新北市中和區橋和路120之1-2號1樓'},
+  "plate": [
+    {
+      "name": "家昌",
+      "contact": "劉R",
+      "phone": "02-2226-3393",
+      "addr": "新北市中和區建一路173號"
+    },
+    {
+      "name": "合信",
+      "contact": "洪S",
+      "phone": "02-2953-4052",
+      "addr": "新北市板橋區三民路1段138巷2號2樓"
+    },
+    {
+      "name": "文鼎",
+      "contact": "林S",
+      "phone": "02-2223-9226",
+      "addr": "新北市中和區中板路13號3樓"
+    },
+    {
+      "name": "上源",
+      "contact": "謝S/陳S",
+      "phone": "02-2255-7934",
+      "addr": "新北市板橋區光武街110巷13號"
+    },
+    {
+      "name": "隆安",
+      "contact": "陳R",
+      "phone": "",
+      "addr": "桃園市桃園區秀山路90號1樓"
+    },
+    {
+      "name": "慧鴻",
+      "contact": "林R",
+      "phone": "02-2226-9193",
+      "addr": "新北市中和區立德街52巷5號3樓"
+    }
   ],
-  finish: [
-    {name:'翊銘',contact:'',phone:'02-2221-3899',addr:''},
-    {name:'正義',contact:'',phone:'02-2964-0270',addr:''},
-    {name:'得利燙金廠',contact:'',phone:'02-2957-1580',addr:'新北市板橋區翠華街6巷103號'},
-    {name:'弘采燙金廠',contact:'',phone:'02-2221-3628',addr:'新北市中和區立德街7巷14號'},
-    {name:'弘大上光廠',contact:'',phone:'02-2225-1777',addr:'新北市中和區立德街28號2樓'},
-    {name:'志助手工包裝',contact:'',phone:'02-2223-5997',addr:'新北市中和區中板路15巷13號5樓'},
-    {name:'韋樺刀模',contact:'',phone:'',addr:''},
-    {name:'建利刀模',contact:'',phone:'02-2984-3405',addr:''},
-    {name:'中正刀模',contact:'',phone:'02-2687-2274',addr:''},
+  "knife": [
+    {
+      "name": "韋樺",
+      "contact": "",
+      "phone": "",
+      "addr": ""
+    },
+    {
+      "name": "建利",
+      "contact": "",
+      "phone": "02-2984-3405",
+      "addr": ""
+    },
+    {
+      "name": "中正",
+      "contact": "",
+      "phone": "02-2687-2274",
+      "addr": ""
+    },
+    {
+      "name": "晶益",
+      "contact": "陳R",
+      "phone": "02-2255-8880",
+      "addr": "新北市板橋區民治街8巷9號"
+    },
+    {
+      "name": "宇建創意",
+      "contact": "",
+      "phone": "02-2337-4470",
+      "addr": "台北市萬華區和平西路3段309巷15弄21號"
+    }
+  ],
+  "paper": [
+    {
+      "name": "長瑩",
+      "contact": "朱R/蔡R",
+      "phone": "02-22990979",
+      "addr": "新北市五股區五權二路5號"
+    },
+    {
+      "name": "恆成",
+      "contact": "鄭R",
+      "phone": "02-22186542",
+      "addr": "新北市新店區民權路130巷9號1樓"
+    },
+    {
+      "name": "聯美",
+      "contact": "何S",
+      "phone": "02-29125856",
+      "addr": "新北市新店區寶高路7巷2號"
+    },
+    {
+      "name": "竣揚",
+      "contact": "邱S",
+      "phone": "02-22253211",
+      "addr": "新北市中和區中山路二段365巷2弄7號"
+    },
+    {
+      "name": "源圓",
+      "contact": "游R",
+      "phone": "02-25093821",
+      "addr": "台北市中山區復興北路436號"
+    },
+    {
+      "name": "佳域",
+      "contact": "",
+      "phone": "02-82456508",
+      "addr": "新北市中和區橋安街15巷3號"
+    },
+    {
+      "name": "巨圓",
+      "contact": "張R",
+      "phone": "02-28831551",
+      "addr": "台北市士林區承德路四段152號9F"
+    },
+    {
+      "name": "富億",
+      "contact": "",
+      "phone": "02-89532203",
+      "addr": "新北市板橋區萬安街124-2號"
+    },
+    {
+      "name": "立昌",
+      "contact": "憲哥R",
+      "phone": "02-66210777",
+      "addr": "新北市中和區連城路194巷11號"
+    },
+    {
+      "name": "商鉅",
+      "contact": "蔡R",
+      "phone": "02-22223250",
+      "addr": "新北市中和區建六路67巷32號1樓"
+    },
+    {
+      "name": "采憶",
+      "contact": "",
+      "phone": "02-85313798",
+      "addr": "新北市樹林區中華路379巷62弄17號"
+    },
+    {
+      "name": "大亞",
+      "contact": "",
+      "phone": "02-22216625",
+      "addr": "新北市中和區員山路502號8樓之2"
+    },
+    {
+      "name": "樺陞",
+      "contact": "黃S",
+      "phone": "02-2245-8128",
+      "addr": "新北市中和區福祥路85巷3號"
+    },
+    {
+      "name": "九昇",
+      "contact": "黃R",
+      "phone": "02-29085921",
+      "addr": "新北市新莊區思源路94巷9號"
+    },
+    {
+      "name": "四維",
+      "contact": "蘇R",
+      "phone": "02-29991121",
+      "addr": "新北市三重區光復路一段79號"
+    },
+    {
+      "name": "益誠",
+      "contact": "王R",
+      "phone": "02-2246-8168",
+      "addr": ""
+    },
+    {
+      "name": "宸希",
+      "contact": "鄭R",
+      "phone": "02-2813-6600",
+      "addr": "台北市士林區延平北路八段157巷37號"
+    },
+    {
+      "name": "冠郝",
+      "contact": "蘇R",
+      "phone": "02-2226-6368",
+      "addr": "新北市中和區中正路1226號"
+    },
+    {
+      "name": "琳得科",
+      "contact": "楊R",
+      "phone": "02-2571-7696",
+      "addr": "台北市中山區松江路318號10F-5"
+    },
+    {
+      "name": "眾鈦",
+      "contact": "謝R",
+      "phone": "02-2903-9928",
+      "addr": "新北市五股區五工三路114號"
+    },
+    {
+      "name": "兆盈",
+      "contact": "梁R",
+      "phone": "02-2996-9136",
+      "addr": "新北市新莊區中港三街20巷1號"
+    },
+    {
+      "name": "優美",
+      "contact": "",
+      "phone": "02-2268-1555",
+      "addr": "新北市土城區大暖路51號"
+    }
   ]
 };
 
@@ -733,23 +1261,62 @@ function saveS(key){ localStorage.setItem('lm_'+key+'3', JSON.stringify(S[key]))
 const SHEETS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSa2Yfrusngf8mAJqRapd2gKES0lJlviov_eertTi6xDIFECfnAEPQ2KxATo7QvXuERZ8CLSny99l3v/pub?gid=1949844766&single=true&output=csv';
 
 const CAT_MAP = {
-  '平版印刷廠':'print','後加工廠':'finish','版廠':'plate',
-  '代工廠':'finish','紙廠':'paper','自黏材料':'paper',
+  '印刷代工廠':'print','平版印刷廠':'print','網版印刷廠':'print',
+  '數位印刷廠':'print','合版印刷廠':'print','印務公司':'print',
+  '後加工廠':'finish','加工廠':'finish','代工廠':'finish',
+  '版廠':'plate','製版廠':'plate',
+  '紙廠':'paper','自黏材料':'paper','材料商':'paper',
   '刀模廠':'knife'
 };
 
+function parseCSVLine(line){
+  // 正確處理 CSV 欄位內含逗號或引號的情況
+  const result=[];let cur='';let inQ=false;
+  for(let i=0;i<line.length;i++){
+    const c=line[i];
+    if(c==='"'){ inQ=!inQ; continue; }
+    if(c===',' && !inQ){ result.push(cur.trim()); cur=''; continue; }
+    cur+=c;
+  }
+  result.push(cur.trim());
+  return result;
+}
+
 function parseVendorsCSV(text){
-  const lines = text.split('\n').slice(1);
+  const lines = text.split('\n');
+  const header = parseCSVLine(lines[0]);
+  const iName = Math.max(header.findIndex(h=>h.includes('簡稱')||h==='廠商簡稱'), 0);
+  const iCode = header.findIndex(h=>h.includes('代碼'));
+  const iCat  = header.findIndex(h=>h.includes('類別'));
+  const iAddr = header.findIndex(h=>h.includes('地址'));
+  const iPhone= header.findIndex(h=>h.includes('電話')&&!h.includes('手機')&&!h.includes('行動'));
+  const iMob  = header.findIndex(h=>h.includes('手機')||h.includes('行動'));
+  const iCtct = header.findIndex(h=>h.includes('聯絡人'));
   const result = {plate:[],knife:[],paper:[],print:[],finish:[]};
-  lines.forEach(line=>{
+  lines.slice(1).forEach(line=>{
     if(!line.trim()) return;
-    const cols = line.split(',').map(c=>c.replace(/"/g,'').trim());
-    const name=cols[1]; const cat=cols[2]; const addr=cols[4];
-    const phone=cols[5]; const contact=cols[7]; const mobile=cols[8];
+    const cols = parseCSVLine(line);
+    const name   = cols[iName>=0?iName:0]||'';
+    const code   = cols[iCode>=0?iCode:1]||'';
+    const cat    = cols[iCat>=0?iCat:2]||'';
+    const addr   = iAddr>=0 ? cols[iAddr]||'' : '';
+    const phone  = iPhone>=0 ? cols[iPhone]||'' : '';
+    const mobile = iMob>=0 ? cols[iMob]||'' : '';
+    const contact= iCtct>=0 ? cols[iCtct]||'' : '';
+    const displayPhone = mobile||phone;
     if(!name) return;
-    const type = CAT_MAP[cat] || null;
-    if(!type) return;
-    result[type].push({name, contact:contact||'', phone:mobile||phone||'', addr:addr||''});
+    let rawType = CAT_MAP[cat] || null;
+    if(!rawType) return;
+    let type;
+    if(rawType === 'print_or_digital'){
+      if(code.startsWith('P')) type = 'print';
+      else if(code.startsWith('L')) type = 'digital';
+      else return;
+    } else {
+      type = rawType;
+    }
+    if(!result[type]) return;
+    result[type].push({name, contact, phone:displayPhone, addr});
   });
   return result;
 }
@@ -760,11 +1327,12 @@ function parseVendorsCSV(text){
 async function init(){
   const today = new Date().toISOString().split('T')[0];
   ['p-date','f-date'].forEach(id=>document.getElementById(id).value=today);
-  const no = genNo();
-  document.getElementById('p-order').value = no;
-  document.getElementById('f-order').value = no;
-  document.getElementById('p-foot-order').textContent = no;
-  document.getElementById('f-foot-order').textContent = no;
+  const pNo = genNo('PRT');
+  const fNo = pNo.replace('-PRT','-FIN');
+  document.getElementById('p-order').value = pNo;
+  document.getElementById('f-order').value = fNo;
+  document.getElementById('p-foot-order').textContent = pNo;
+  document.getElementById('f-foot-order').textContent = fNo;
   // Load vendors from Sheets
   await loadVendorsFromSheets();
   refreshAll();
@@ -783,17 +1351,20 @@ async function loadVendorsFromSheets(){
   }
 }
 
-function genNo(){
+function genNo(suffix=''){
   const d=new Date();
   const ymd=d.getFullYear().toString().slice(2)+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
   S.seq++; localStorage.setItem('lm_seq3',S.seq);
-  return `LM-${ymd}-${String(S.seq).padStart(3,'0')}`;
+  const base=`LM-${ymd}-${String(S.seq).padStart(3,'0')}`;
+  return suffix ? `${base}-${suffix}` : base;
 }
 
 function refreshAll(){
   populateRecipientSelects();
   populateTableSelects();
   populateStaffSelects();
+  populateIncomingVendor();
+  populateCoatingVendor();
   renderVendorTables();
   renderSimpleList('staff');
   renderSimpleList('process');
@@ -804,7 +1375,7 @@ function refreshAll(){
 // Vendor Selects
 // ══════════════════════════════════════════
 function allVendors(){
-  return [...(S.vendors.plate||[]),...(S.vendors.knife||[]),...S.vendors.paper,...S.vendors.print,...S.vendors.finish];
+  return [...(S.vendors.plate||[]),...(S.vendors.knife||[]),...(S.vendors.paper||[]),...(S.vendors.print||[]),...(S.vendors.digital||[]),...(S.vendors.finish||[])];
 }
 
 function vendorOpts(types, placeholder){
@@ -837,7 +1408,7 @@ function populateRecipientSelects(){
   // 下一站：所有廠商
   const nx = document.getElementById('p-next-vendor');
   const cur_nx = nx.value;
-  nx.innerHTML = vendorOpts(['plate','paper','print','finish'],'選擇廠商');
+  nx.innerHTML = vendorOpts(['finish'],'選擇廠商');
   if(cur_nx) nx.value=cur_nx;
 }
 
@@ -866,7 +1437,7 @@ function populateTableSelects(){
   applyToTbody('f-detail-body', finishOpts);
   applyToTbody('f-knife-body', vendorOpts(['knife'],'選擇'));
   // 來料廠商
-  document.querySelectorAll('.meta-strip select').forEach(sel=>{
+  document.querySelectorAll('.meta-strip select:not([id])').forEach(sel=>{
     const cur=sel.value; sel.innerHTML=allOpts; if(cur) sel.value=cur;
   });
 }
@@ -892,7 +1463,9 @@ function updateRecipient(prefix, type){
     document.getElementById(prefix+'-r-phone').textContent = v.phone ? '電話：'+v.phone : '';
     document.getElementById(prefix+'-r-addr').textContent = v.addr ? v.addr : '';
   } else {
-    ['contact','phone','addr'].forEach(k=>document.getElementById(prefix+'-r-'+k).textContent='');
+    ['name','contact','phone','addr'].forEach(k=>{
+      const el=document.getElementById(prefix+'-r-'+k); if(el) el.textContent='';
+    });
   }
 }
 
@@ -906,7 +1479,7 @@ function updateNextStation(prefix){
     if(v.contact) parts.push('聯絡：'+v.contact);
     if(v.phone) parts.push('☎ '+v.phone);
     if(v.addr) parts.push(v.addr);
-    info.innerHTML = parts.map(p=>`<span>${p}</span>`).join('');
+    info.innerHTML = parts.map(p=>`<span style="display:block">${p}</span>`).join('');
   } else {
     info.innerHTML='';
   }
@@ -948,6 +1521,7 @@ const fplateCols = ()=>`
   <td><div class="plate-opts">
     <label><input type="checkbox"> 對位片</label>
     <label><input type="checkbox"> 電子樣</label>
+    <label><input type="checkbox"> 數位噴圖</label>
     <label><input type="checkbox"> 新版</label>
     <label><input type="checkbox"> 舊版</label>
     <label><input type="checkbox"> 留版</label>
@@ -961,6 +1535,7 @@ const paperCols = ()=>`
   <td><input type="text"></td><td><input type="text"></td>
   <td><input type="text"></td><td><input type="text"></td>
   <td><input type="text"></td><td><input type="text"></td>
+  <td><input type="text"></td>
   <td><button class="del-btn" onclick="delRow(this)">×</button></td>`;
 
 const printCols = ()=>`
@@ -1020,7 +1595,8 @@ function renderProcessCheckboxes(){
 function renderVendorTables(){
   if(!S.vendors.plate) S.vendors.plate=defaultVendors.plate;
   if(!S.vendors.knife) S.vendors.knife=defaultVendors.knife;
-  ['plate','knife','paper','print','finish'].forEach(t=>{
+  if(!S.vendors.digital) S.vendors.digital=defaultVendors.digital;
+  ['plate','knife','paper','print','digital','finish'].forEach(t=>{
     const tbody=document.getElementById('vendor-'+t+'-body');
     tbody.innerHTML=S.vendors[t].map((v,i)=>`
       <tr>
@@ -1068,10 +1644,7 @@ function renderSimpleList(type){
   const arr=S[key];
   const el=document.getElementById(type+'-list');
   el.innerHTML=arr.map((item,i)=>`
-    <div style="display:flex;gap:8px;align-items:center">
-      <input style="flex:1;border:1px solid var(--border);padding:5px 8px;font-family:inherit;font-size:12px;outline:none" type="text" value="${item}" onchange="S['${key}'][${i}]=this.value;saveS('${key}');refreshAll()">
-      <button class="be-item-del" onclick="delSimple('${key}',${i})" style="padding:5px 10px;border:1px solid var(--border);background:#fff;cursor:pointer;font-size:12px;color:#999;transition:all .15s" onmouseover="this.style.background='#fee';this.style.color='#c33'" onmouseout="this.style.background='#fff';this.style.color='#999'">刪除</button>
-    </div>`).join('');
+        `).join('');
 }
 
 function addStaff(){
@@ -1140,6 +1713,21 @@ function switchTab(id,btn){
   document.querySelectorAll('.sheet').forEach(s=>s.classList.remove('active'));
   document.getElementById('sheet-'+id).classList.add('active');
   S.activeSheet=id;
+  // 切換到後加工單時，自動帶入共用欄位
+  if(id==='finish'){
+    const fields=[['p-client','f-client'],['p-due','f-due'],['p-staff','f-staff']];
+    fields.forEach(([src,dst])=>{
+      const s=document.getElementById(src),d=document.getElementById(dst);
+      if(s&&d&&!d.value) d.value=s.value;
+    });
+    // 後加工單工單編號：取印刷工單號換 PRT→FIN
+    const pOrd=document.getElementById('p-order').value;
+    const fOrd=document.getElementById('f-order');
+    if(pOrd && fOrd && !fOrd.value){
+      fOrd.value=pOrd.replace('-PRT','-FIN');
+      document.getElementById('f-foot-order').textContent=fOrd.value;
+    }
+  }
 }
 
 function switchBeTab(id,btn){
@@ -1162,34 +1750,80 @@ function clearSheet(){
   sheet.querySelectorAll('.urgent-bar').forEach(b=>b.classList.remove('show'));
   sheet.querySelectorAll('.recipient-info span').forEach(s=>s.textContent='');
   sheet.querySelectorAll('.ns-info').forEach(s=>s.textContent='');
-  const no=genNo();const today=new Date().toISOString().split('T')[0];
+  const today=new Date().toISOString().split('T')[0];
   if(S.activeSheet==='print'){
-    document.getElementById('p-order').value=no;
+    const pNo=genNo('PRT');
+    document.getElementById('p-order').value=pNo;
     document.getElementById('p-date').value=today;
-    document.getElementById('p-foot-order').textContent=no;
+    document.getElementById('p-foot-order').textContent=pNo;
   }else{
-    document.getElementById('f-order').value=no;
+    const fNo=genNo('FIN');
+    document.getElementById('f-order').value=fNo;
     document.getElementById('f-date').value=today;
-    document.getElementById('f-foot-order').textContent=no;
+    document.getElementById('f-foot-order').textContent=fNo;
   }
   showToast('工單已清除');
 }
 
 function exportPDF(){
-  const sheet=document.getElementById('sheet-'+S.activeSheet);
-  const orderNo=S.activeSheet==='print'?document.getElementById('p-order').value:document.getElementById('f-order').value;
-  const title=S.activeSheet==='print'?'印刷工單':'後加工單';
-  const fname=`里民承印_${title}_${orderNo||'draft'}.pdf`;
+  const sheet = document.getElementById('sheet-'+S.activeSheet);
+  const orderNo = S.activeSheet==='print'
+    ? document.getElementById('p-order').value
+    : document.getElementById('f-order').value;
+  const title = S.activeSheet==='print' ? '印刷工單' : '後加工單';
+  const fname = `里民承印_${title}_${orderNo||'draft'}.pdf`;
   sheet.querySelectorAll('.del-btn,.sec-hdr-add').forEach(el=>el.style.display='none');
   html2pdf().set({
-    margin:[8,8,8,8],filename:fname,
+    margin:[8,8,8,8],
+    filename:fname,
     image:{type:'jpeg',quality:.95},
-    html2canvas:{scale:2,useCORS:true},
+    html2canvas:{scale:2,useCORS:true,scrollX:0,scrollY:0,windowWidth:960,logging:false},
     jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
-  }).from(sheet).save().then(()=>{
+  }).from(sheet).outputPdf('blob').then(blob=>{
     sheet.querySelectorAll('.del-btn,.sec-hdr-add').forEach(el=>el.style.display='');
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = fname; a.target = '_blank';
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
     showToast('PDF 已下載：'+fname);
   });
+}
+function toggleCoating(cb){
+  // 如果任何上水光被勾選，顯示廠商欄；否則清空
+  const wrap = cb.closest('div');
+  const anyChecked = [...wrap.querySelectorAll('input[type="checkbox"]')].some(c=>c.checked);
+  const vsel = document.getElementById('coating-vendor');
+  if(vsel) vsel.style.opacity = anyChecked ? '1' : '0.4';
+}
+
+function populateIncomingVendor(){
+  const sel = document.getElementById('f-incoming-vendor');
+  if(!sel) return;
+  const cur = sel.value;
+  const groups = [
+    {label:'紙廠', list: S.vendors.paper||[]},
+    {label:'印刷廠（P）', list: S.vendors.print||[]},
+    {label:'印刷廠（L）', list: S.vendors.digital||[]},
+  ];
+  let html = '<option value="">選擇</option>';
+  groups.forEach(g=>{
+    if(!g.list.length) return;
+    html += `<optgroup label="${g.label}">`;
+    g.list.forEach(v=> html+=`<option value="${v.name}">${v.name}</option>`);
+    html += '</optgroup>';
+  });
+  sel.innerHTML = html;
+  if(cur) sel.value = cur;
+}
+
+function populateCoatingVendor(){
+  const sel = document.getElementById('coating-vendor');
+  if(!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">選擇廠商</option>' +
+    (S.vendors.finish||[]).map(v=>`<option value="${v.name}">${v.name}</option>`).join('');
+  if(cur) sel.value = cur;
 }
 
 function showToast(msg){
