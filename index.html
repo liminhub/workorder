@@ -1297,15 +1297,16 @@ function parseCSVLine(line){
 
 function parseVendorsCSV(text){
   const lines = text.split('\n');
-  const header = parseCSVLine(lines[0]);
-  const iName = Math.max(header.findIndex(h=>h.includes('簡稱')||h==='廠商簡稱'), 0);
+  const firstLine = lines[0].replace(/^\uFEFF/, '');
+  const header = parseCSVLine(firstLine);
+  const iName = header.findIndex(h=>h.replace(/\uFEFF/g,'').includes('簡稱'));
   const iCode = header.findIndex(h=>h.includes('代碼'));
   const iCat  = header.findIndex(h=>h.includes('類別'));
   const iAddr = header.findIndex(h=>h.includes('地址'));
   const iPhone= header.findIndex(h=>h.includes('電話')&&!h.includes('手機')&&!h.includes('行動'));
   const iMob  = header.findIndex(h=>h.includes('手機')||h.includes('行動'));
   const iCtct = header.findIndex(h=>h.includes('聯絡人'));
-  const result = {plate:[],knife:[],paper:[],print:[],digital:[],finish:[]};
+  const result = {plate:[],knife:[],paper:[],print:[],finish:[]};
   lines.slice(1).forEach(line=>{
     if(!line.trim()) return;
     const cols = parseCSVLine(line);
@@ -1318,6 +1319,7 @@ function parseVendorsCSV(text){
     const contact= iCtct>=0 ? cols[iCtct]||'' : '';
     const displayPhone = mobile||phone;
     if(!name) return;
+    if(/^[A-Z][0-9]+$/.test(name)) return; // 讀錯欄位保護
     let rawType = CAT_MAP[cat] || null;
     if(!rawType) return;
     let type;
