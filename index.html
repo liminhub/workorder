@@ -722,6 +722,19 @@ tbody td input[type="text"],tbody td select,tbody td textarea{width:100%;border:
       <button class="be-save-btn" onclick="addVendor('print')">新增印刷廠</button>
     </div>
 
+    <div class="be-section-title">數位／合版印刷廠（L系列）</div>
+    <table class="be-table"><thead><tr>
+      <th style="width:140px">廠商名稱</th><th style="width:80px">聯絡人</th>
+      <th style="width:120px">電話</th><th>地址</th><th style="width:40px"></th>
+    </tr></thead><tbody id="vendor-digital-body"></tbody></table>
+    <div class="be-add-row">
+      <input class="be-add-inp" id="vdg-name" placeholder="廠商名稱">
+      <input class="be-add-inp" id="vdg-contact" placeholder="聯絡人">
+      <input class="be-add-inp" id="vdg-phone" placeholder="電話">
+      <input class="be-add-inp" id="vdg-addr" placeholder="地址">
+      <button class="be-save-btn" onclick="addVendor('digital')">新增數位印刷廠</button>
+    </div>
+
     <div class="be-section-title">後加工廠</div>
     <table class="be-table"><thead><tr>
       <th style="width:140px">廠商名稱</th><th style="width:80px">聯絡人</th>
@@ -1261,8 +1274,8 @@ function saveS(key){ localStorage.setItem('lm_'+key+'3', JSON.stringify(S[key]))
 const SHEETS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSa2Yfrusngf8mAJqRapd2gKES0lJlviov_eertTi6xDIFECfnAEPQ2KxATo7QvXuERZ8CLSny99l3v/pub?gid=1949844766&single=true&output=csv';
 
 const CAT_MAP = {
-  '印刷代工廠':'print','平版印刷廠':'print','網版印刷廠':'print',
-  '數位印刷廠':'print','合版印刷廠':'print','印務公司':'print',
+  '印刷代工廠':'print_or_digital','平版印刷廠':'print','網版印刷廠':'print',
+  '數位印刷廠':'print_or_digital','合版印刷廠':'print_or_digital','印務公司':'print',
   '後加工廠':'finish','加工廠':'finish','代工廠':'finish',
   '版廠':'plate','製版廠':'plate',
   '紙廠':'paper','自黏材料':'paper','材料商':'paper',
@@ -1348,6 +1361,7 @@ async function loadVendorsFromSheets(){
   } catch(e) {
     console.warn('Sheets 載入失敗，使用預設資料', e);
     if(!S.vendors.plate) S.vendors = JSON.parse(JSON.stringify(defaultVendors));
+    if(!S.vendors.digital) S.vendors.digital = JSON.parse(JSON.stringify(defaultVendors.digital));
   }
 }
 
@@ -1610,7 +1624,7 @@ function renderVendorTables(){
 }
 
 function addVendor(type){
-  const prefix = type==='plate'?'vpl':type==='knife'?'vk':type==='paper'?'vp':type==='print'?'vpr':'vf';
+  const prefix = type==='plate'?'vpl':type==='knife'?'vk':type==='paper'?'vp':type==='print'?'vpr':type==='digital'?'vdg':'vf';
   const name=(document.getElementById(prefix+'-name').value||'').trim();
   if(!name){showToast('請填入廠商名稱');return;}
   const v={
@@ -1644,7 +1658,10 @@ function renderSimpleList(type){
   const arr=S[key];
   const el=document.getElementById(type+'-list');
   el.innerHTML=arr.map((item,i)=>`
-        `).join('');
+    <div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border-lt)">
+      <span style="flex:1;font-size:13px">${item}</span>
+      <button class="del-btn" onclick="delSimple('${key}',${i})" style="flex-shrink:0">×</button>
+    </div>`).join('');
 }
 
 function addStaff(){
