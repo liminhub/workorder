@@ -1297,9 +1297,8 @@ function parseCSVLine(line){
 
 function parseVendorsCSV(text){
   const lines = text.split('\n');
-  const firstLine = lines[0].replace(/^\uFEFF/, '');
-  const header = parseCSVLine(firstLine);
-  const iName = header.findIndex(h=>h.replace(/\uFEFF/g,'').includes('簡稱'));
+  const header = parseCSVLine(lines[0]);
+  const iName = Math.max(header.findIndex(h=>h.includes('簡稱')||h==='廠商簡稱'), 0);
   const iCode = header.findIndex(h=>h.includes('代碼'));
   const iCat  = header.findIndex(h=>h.includes('類別'));
   const iAddr = header.findIndex(h=>h.includes('地址'));
@@ -1319,7 +1318,6 @@ function parseVendorsCSV(text){
     const contact= iCtct>=0 ? cols[iCtct]||'' : '';
     const displayPhone = mobile||phone;
     if(!name) return;
-    if(/^[A-Z][0-9]+$/.test(name)) return; // 讀錯欄位保護
     let rawType = CAT_MAP[cat] || null;
     if(!rawType) return;
     let type;
@@ -1348,8 +1346,8 @@ async function init(){
   document.getElementById('f-order').value = fNo;
   document.getElementById('p-foot-order').textContent = pNo;
   document.getElementById('f-foot-order').textContent = fNo;
-  // Load vendors from Sheets
-  await loadVendorsFromSheets();
+  // 確保 digital key 存在
+  if(!S.vendors.digital) S.vendors.digital = JSON.parse(JSON.stringify(defaultVendors.digital));
   refreshAll();
 }
 
