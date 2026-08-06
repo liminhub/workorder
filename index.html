@@ -1305,7 +1305,7 @@ function parseVendorsCSV(text){
   const iPhone= header.findIndex(h=>h.includes('電話')&&!h.includes('手機')&&!h.includes('行動'));
   const iMob  = header.findIndex(h=>h.includes('手機')||h.includes('行動'));
   const iCtct = header.findIndex(h=>h.includes('聯絡人'));
-  const result = {plate:[],knife:[],paper:[],print:[],finish:[]};
+  const result = {plate:[],knife:[],paper:[],print:[],digital:[],finish:[]};
   lines.slice(1).forEach(line=>{
     if(!line.trim()) return;
     const cols = parseCSVLine(line);
