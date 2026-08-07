@@ -183,6 +183,20 @@ tbody td input[type="text"],tbody td select,tbody td textarea{width:100%;border:
 .cat-print{background:#E1F5EE;color:#085041}
 .cat-finish{background:#FFF3DC;color:#7a4a10}
 
+/* ── Searchable Select ── */
+.ss-wrap{position:relative;display:inline-block;width:100%}
+.ss-input{width:100%;border:none;border-bottom:1.5px solid var(--ink);outline:none;font-family:inherit;font-size:13px;padding:3px 24px 3px 4px;background:transparent;cursor:pointer;color:var(--ink);box-sizing:border-box}
+.ss-input.in-table{border-bottom:1px solid #ccc;font-size:13px;padding:4px 20px 4px 6px}
+.ss-arrow{position:absolute;right:4px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--ink-lt);font-size:10px}
+.ss-dropdown{position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid var(--ink);box-shadow:2px 4px 12px rgba(0,0,0,.12);z-index:9999;max-height:220px;overflow-y:auto;display:none}
+.ss-dropdown.open{display:block}
+.ss-search{width:100%;border:none;border-bottom:1px solid var(--border);outline:none;font-family:inherit;font-size:12px;padding:6px 10px;background:#fafaf8;box-sizing:border-box;position:sticky;top:0}
+.ss-option{padding:7px 10px;font-size:13px;cursor:pointer;color:var(--ink)}
+.ss-option:hover,.ss-option.highlighted{background:var(--pale)}
+.ss-option.selected{background:var(--green-lt);color:var(--green-dk)}
+.ss-group-label{padding:4px 10px;font-size:10px;font-weight:700;color:var(--ink-lt);letter-spacing:.08em;background:#f0ede6;text-transform:uppercase}
+.ss-empty{padding:8px 10px;font-size:12px;color:var(--ink-lt)}
+
 /* ── Toast ── */
 .toast{position:fixed;bottom:24px;right:24px;background:var(--green-dk);color:#fff;padding:10px 20px;font-size:13px;letter-spacing:.06em;z-index:999;opacity:0;transform:translateY(8px);transition:all .3s;pointer-events:none}
 .toast.show{opacity:1;transform:translateY(0)}
@@ -274,6 +288,25 @@ tbody td input[type="text"],tbody td select,tbody td textarea{width:100%;border:
   .sheet.active > div[style*="grid-template-columns:auto"]{
     display:grid!important;
   }
+
+  /* 列印時縮小字級讓後加工單符合A4 */
+  .proc-grid{
+    grid-template-columns:repeat(3,1fr)!important;
+    gap:4px 12px!important;
+  }
+  .proc-item{font-size:11px!important;}
+  .proc-lbl{font-size:11px!important;}
+  table{font-size:11px!important;}
+  thead th{font-size:10px!important;padding:3px 5px!important;}
+  tbody td input[type="text"],tbody td select{font-size:11px!important;padding:3px 4px!important;}
+  .mc-inp{font-size:11px!important;padding:4px 6px!important;}
+  .job-inp{font-size:12px!important;padding:5px 6px!important;}
+  .sec-hdr{font-size:11px!important;padding:4px 10px!important;}
+  .ns-inp{font-size:11px!important;}
+  .remarks-ta{font-size:11px!important;min-height:40px!important;}
+  .plate-opts label{font-size:10px!important;}
+  /* 隱藏下拉箭頭列印時只顯示文字 */
+  select{-webkit-appearance:none!important;appearance:none!important;}
 
   @page{
     size:A4 portrait;
@@ -651,7 +684,7 @@ tbody td input[type="text"],tbody td select,tbody td textarea{width:100%;border:
   <div class="toolbar">
     <button class="btn btn-ghost" onclick="clearSheet()">清　除</button>
     <button class="btn btn-ghost" onclick="window.print()">列　印</button>
-    <button class="btn btn-green" onclick="exportPDF()">列印 ／ PDF</button>
+    <button class="btn btn-green" onclick="importFromSheets()">重新載入廠商</button>
   </div>
 </div>
 
@@ -1297,8 +1330,9 @@ function parseCSVLine(line){
 
 function parseVendorsCSV(text){
   const lines = text.split('\n');
-  const header = parseCSVLine(lines[0]);
-  const iName = Math.max(header.findIndex(h=>h.includes('簡稱')||h==='廠商簡稱'), 0);
+  const firstLine = lines[0].replace(/^\uFEFF/, '');
+  const header = parseCSVLine(firstLine);
+  const iName = header.findIndex(h=>h.replace(/\uFEFF/g,'').includes('\u7c21\u7a31'));
   const iCode = header.findIndex(h=>h.includes('代碼'));
   const iCat  = header.findIndex(h=>h.includes('類別'));
   const iAddr = header.findIndex(h=>h.includes('地址'));
@@ -1318,6 +1352,7 @@ function parseVendorsCSV(text){
     const contact= iCtct>=0 ? cols[iCtct]||'' : '';
     const displayPhone = mobile||phone;
     if(!name) return;
+    if(/^[A-Z][0-9]+$/.test(name)) return;
     let rawType = CAT_MAP[cat] || null;
     if(!rawType) return;
     let type;
@@ -1346,8 +1381,8 @@ async function init(){
   document.getElementById('f-order').value = fNo;
   document.getElementById('p-foot-order').textContent = pNo;
   document.getElementById('f-foot-order').textContent = fNo;
-  // 確保 digital key 存在
-  if(!S.vendors.digital) S.vendors.digital = JSON.parse(JSON.stringify(defaultVendors.digital));
+  // Load vendors from Sheets
+  await loadVendorsFromSheets();
   refreshAll();
 }
 
@@ -1383,6 +1418,7 @@ function refreshAll(){
   renderSimpleList('staff');
   renderSimpleList('process');
   renderProcessCheckboxes();
+  initAllSearchableSelects();
 }
 
 // ══════════════════════════════════════════
@@ -1841,6 +1877,155 @@ function populateCoatingVendor(){
   sel.innerHTML = '<option value="">選擇廠商</option>' +
     (S.vendors.finish||[]).map(v=>`<option value="${v.name}">${v.name}</option>`).join('');
   if(cur) sel.value = cur;
+}
+
+// ══════════════════════════════════════════
+// Searchable Select
+// ══════════════════════════════════════════
+function createSearchableSelect(originalSelect){
+  if(originalSelect.dataset.ssInit) return;
+  originalSelect.dataset.ssInit = '1';
+  originalSelect.style.display = 'none';
+
+  const inTable = !!originalSelect.closest('td');
+  const wrap = document.createElement('div');
+  wrap.className = 'ss-wrap';
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'ss-input' + (inTable ? ' in-table' : '');
+  input.readOnly = false;
+  input.placeholder = originalSelect.options[0]?.text || '選擇';
+  input.autocomplete = 'off';
+
+  const arrow = document.createElement('span');
+  arrow.className = 'ss-arrow';
+  arrow.textContent = '▾';
+
+  const dropdown = document.createElement('div');
+  dropdown.className = 'ss-dropdown';
+
+  const searchInput = document.createElement('input');
+  searchInput.type = 'text';
+  searchInput.className = 'ss-search';
+  searchInput.placeholder = '搜尋…';
+  dropdown.appendChild(searchInput);
+
+  function buildOptions(filter){
+    const existing = dropdown.querySelectorAll('.ss-option,.ss-group-label,.ss-empty');
+    existing.forEach(el=>el.remove());
+    const q = (filter||'').toLowerCase();
+    let count = 0;
+    // 收集 options 和 optgroups
+    Array.from(originalSelect.children).forEach(child=>{
+      if(child.tagName === 'OPTGROUP'){
+        const groupItems = Array.from(child.children).filter(o=>
+          !o.disabled && o.value !== '' && (!q || o.text.toLowerCase().includes(q))
+        );
+        if(groupItems.length){
+          const lbl = document.createElement('div');
+          lbl.className = 'ss-group-label';
+          lbl.textContent = child.label;
+          dropdown.appendChild(lbl);
+          groupItems.forEach(o=>{
+            const opt = document.createElement('div');
+            opt.className = 'ss-option' + (o.value===originalSelect.value?' selected':'');
+            opt.textContent = o.text;
+            opt.dataset.value = o.value;
+            opt.addEventListener('mousedown', e=>{
+              e.preventDefault();
+              selectOption(o.value, o.text);
+            });
+            dropdown.appendChild(opt);
+            count++;
+          });
+        }
+      } else if(child.tagName === 'OPTION' && child.value !== ''){
+        if(!q || child.text.toLowerCase().includes(q)){
+          const opt = document.createElement('div');
+          opt.className = 'ss-option' + (child.value===originalSelect.value?' selected':'');
+          opt.textContent = child.text;
+          opt.dataset.value = child.value;
+          opt.addEventListener('mousedown', e=>{
+            e.preventDefault();
+            selectOption(child.value, child.text);
+          });
+          dropdown.appendChild(opt);
+          count++;
+        }
+      }
+    });
+    if(count === 0){
+      const empty = document.createElement('div');
+      empty.className = 'ss-empty';
+      empty.textContent = '找不到符合的廠商';
+      dropdown.appendChild(empty);
+    }
+  }
+
+  function selectOption(value, text){
+    originalSelect.value = value;
+    originalSelect.dispatchEvent(new Event('change', {bubbles:true}));
+    input.value = value ? text : '';
+    searchInput.value = '';
+    buildOptions('');
+    closeDropdown();
+  }
+
+  function openDropdown(){
+    // 關閉其他開著的
+    document.querySelectorAll('.ss-dropdown.open').forEach(d=>{
+      if(d !== dropdown) d.classList.remove('open');
+    });
+    buildOptions(searchInput.value);
+    dropdown.classList.add('open');
+    setTimeout(()=>searchInput.focus(), 50);
+  }
+
+  function closeDropdown(){
+    dropdown.classList.remove('open');
+    // 若 input 沒有對應值，清空
+    if(!originalSelect.value) input.value = '';
+  }
+
+  input.addEventListener('click', ()=>{
+    dropdown.classList.contains('open') ? closeDropdown() : openDropdown();
+  });
+
+  searchInput.addEventListener('input', ()=>{
+    buildOptions(searchInput.value);
+  });
+
+  searchInput.addEventListener('keydown', e=>{
+    if(e.key==='Escape') closeDropdown();
+  });
+
+  document.addEventListener('click', e=>{
+    if(!wrap.contains(e.target)) closeDropdown();
+  }, true);
+
+  // 同步 originalSelect 外部更新（如 populateRecipientSelects）
+  const observer = new MutationObserver(()=>{
+    const sel = originalSelect;
+    const cur = sel.value;
+    const curText = cur ? (sel.options[sel.selectedIndex]?.text || '') : '';
+    input.value = curText;
+    if(dropdown.classList.contains('open')) buildOptions(searchInput.value);
+  });
+  observer.observe(originalSelect, {childList:true, subtree:true});
+
+  wrap.appendChild(input);
+  wrap.appendChild(arrow);
+  wrap.appendChild(dropdown);
+  originalSelect.parentNode.insertBefore(wrap, originalSelect);
+}
+
+function initAllSearchableSelects(){
+  document.querySelectorAll('select').forEach(sel=>{
+    // 跳過 staff select（人員少，不需要）和 be-table（後台）
+    if(sel.closest('.be-pane')) return;
+    createSearchableSelect(sel);
+  });
 }
 
 function showToast(msg){
