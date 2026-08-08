@@ -188,9 +188,11 @@ tbody td input[type="text"],tbody td select,tbody td textarea{width:100%;border:
 .ss-input{width:100%;border:none;border-bottom:1.5px solid var(--ink);outline:none;font-family:inherit;font-size:13px;padding:3px 24px 3px 4px;background:transparent;cursor:pointer;color:var(--ink);box-sizing:border-box}
 .ss-input.in-table{border-bottom:1px solid #ccc;font-size:13px;padding:4px 20px 4px 6px}
 .ss-arrow{position:absolute;right:4px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--ink-lt);font-size:10px}
-.ss-dropdown{position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid var(--ink);box-shadow:2px 4px 12px rgba(0,0,0,.12);z-index:9999;max-height:220px;overflow-y:auto;display:none}
-.ss-dropdown.open{display:block}
-.ss-search{width:100%;border:none;border-bottom:1px solid var(--border);outline:none;font-family:inherit;font-size:12px;padding:6px 10px;background:#fafaf8;box-sizing:border-box;position:sticky;top:0}
+.ss-dropdown{position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid var(--ink);box-shadow:2px 4px 12px rgba(0,0,0,.12);z-index:9999;max-height:220px;overflow-y:auto;display:none;flex-direction:column}
+.ss-dropdown.open{display:flex}
+.ss-search-wrap{position:sticky;top:0;background:#fff;z-index:1;border-bottom:1px solid var(--border)}
+.ss-search{width:100%;border:none;outline:none;font-family:inherit;font-size:12px;padding:6px 10px;background:#fafaf8;box-sizing:border-box}
+.ss-options{overflow-y:auto;flex:1}
 .ss-option{padding:7px 10px;font-size:13px;cursor:pointer;color:var(--ink)}
 .ss-option:hover,.ss-option.highlighted{background:var(--pale)}
 .ss-option.selected{background:var(--green-lt);color:var(--green-dk)}
@@ -1304,7 +1306,7 @@ function saveS(key){ localStorage.setItem('lm_'+key+'3', JSON.stringify(S[key]))
 // ══════════════════════════════════════════
 // Sheets URL
 // ══════════════════════════════════════════
-const SHEETS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSa2Yfrusngf8mAJqRapd2gKES0lJlviov_eertTi6xDIFECfnAEPQ2KxATo7QvXuERZ8CLSny99l3v/pub?gid=1949844766&single=true&output=csv';
+const SHEETS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSa2Yfrusngf8mAJqRapd2gKES0lJlviov_eertTi6xDIFECfnAEPQ2KkxATo7QvXuERZ8CLSny99l3v/pub?gid=1949844766&single=true&output=csv';
 
 const CAT_MAP = {
   '印刷代工廠':'print_or_digital','平版印刷廠':'print','網版印刷廠':'print',
@@ -1905,14 +1907,21 @@ function createSearchableSelect(originalSelect){
   const dropdown = document.createElement('div');
   dropdown.className = 'ss-dropdown';
 
+  const searchWrap = document.createElement('div');
+  searchWrap.className = 'ss-search-wrap';
   const searchInput = document.createElement('input');
   searchInput.type = 'text';
   searchInput.className = 'ss-search';
   searchInput.placeholder = '搜尋…';
-  dropdown.appendChild(searchInput);
+  searchWrap.appendChild(searchInput);
+  dropdown.appendChild(searchWrap);
+
+  const optionsContainer = document.createElement('div');
+  optionsContainer.className = 'ss-options';
+  dropdown.appendChild(optionsContainer);
 
   function buildOptions(filter){
-    const existing = dropdown.querySelectorAll('.ss-option,.ss-group-label,.ss-empty');
+    const existing = optionsContainer.querySelectorAll('.ss-option,.ss-group-label,.ss-empty');
     existing.forEach(el=>el.remove());
     const q = (filter||'').toLowerCase();
     let count = 0;
@@ -1923,10 +1932,6 @@ function createSearchableSelect(originalSelect){
           !o.disabled && o.value !== '' && (!q || o.text.toLowerCase().includes(q))
         );
         if(groupItems.length){
-          const lbl = document.createElement('div');
-          lbl.className = 'ss-group-label';
-          lbl.textContent = child.label;
-          dropdown.appendChild(lbl);
           groupItems.forEach(o=>{
             const opt = document.createElement('div');
             opt.className = 'ss-option' + (o.value===originalSelect.value?' selected':'');
@@ -1936,7 +1941,7 @@ function createSearchableSelect(originalSelect){
               e.preventDefault();
               selectOption(o.value, o.text);
             });
-            dropdown.appendChild(opt);
+            optionsContainer.appendChild(opt);
             count++;
           });
         }
@@ -1950,7 +1955,7 @@ function createSearchableSelect(originalSelect){
             e.preventDefault();
             selectOption(child.value, child.text);
           });
-          dropdown.appendChild(opt);
+          optionsContainer.appendChild(opt);
           count++;
         }
       }
@@ -1959,7 +1964,7 @@ function createSearchableSelect(originalSelect){
       const empty = document.createElement('div');
       empty.className = 'ss-empty';
       empty.textContent = '找不到符合的廠商';
-      dropdown.appendChild(empty);
+      optionsContainer.appendChild(empty);
     }
   }
 
